@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SmartBot — An advanced AI Chatbot web application built with Python Flask and OpenAI API. Features real-time AI responses, conversation management, dark/light theme, and code highlighting.">
+    <meta name="keywords" content="AI Chatbot, Python Flask, OpenAI API, Machine Learning, Web App, Coding Assistant">
+    <meta name="author" content="SmartBot Team">
+    <title>SmartBot — Advanced AI Chatbot</title>
+
+    <!-- Google Fonts: Inter for UI, JetBrains Mono for Code -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Markdown & Syntax Highlighting Libraries (with offline fallbacks in app.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark-dimmed.min.css" id="hljs-theme">
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236366f1'><path d='M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2M7.5 13A2.5 2.5 0 0 0 5 15.5 2.5 2.5 0 0 0 7.5 18a2.5 2.5 0 0 0 2.5-2.5A2.5 2.5 0 0 0 7.5 13m9 0a2.5 2.5 0 0 0-2.5 2.5 2.5 2.5 0 0 0 2.5 2.5 2.5 2.5 0 0 0 2.5-2.5 2.5 2.5 0 0 0-2.5-2.5'/></svg>">
+</head>
+<body>
+    <!-- App Container -->
+    <div class="app-layout" id="app-layout">
+        
+        <!-- Mobile Sidebar Overlay Backdrop -->
+        <div class="sidebar-backdrop" id="sidebar-backdrop" aria-hidden="true"></div>
+
+        <!-- ================================================================== -->
+        <!-- Sidebar: Conversation History & Application Controls -->
+        <!-- ================================================================== -->
+        <aside class="sidebar" id="sidebar" aria-label="Conversation Sidebar">
+            <!-- Sidebar Header / Branding -->
+            <div class="sidebar-header">
+                <div class="brand">
+                    <div class="brand-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2a2 2 0 0 1 2 2v2h2a6 6 0 0 1 6 6v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-7a6 6 0 0 1 6-6h2V4a2 2 0 0 1 2-2z"/>
+                            <circle cx="9" cy="13" r="1.5" fill="currentColor"/>
+                            <circle cx="15" cy="13" r="1.5" fill="currentColor"/>
+                            <path d="M10 17h4"/>
+                        </svg>
+                        <span class="brand-pulse"></span>
+                    </div>
+                    <div class="brand-info">
+                        <h1 class="brand-title">SmartBot</h1>
+                        <span class="brand-badge">AI 2.0</span>
+                    </div>
+                </div>
+                <button class="icon-btn close-sidebar-btn" id="close-sidebar-btn" title="Close Sidebar" aria-label="Close sidebar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+
+            <!-- New Chat Action -->
+            <div class="sidebar-action">
+                <button class="btn btn-new-chat" id="new-chat-btn" title="Start a new conversation (Ctrl+K)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <span>New Chat</span>
+                    <span class="keyboard-badge">Ctrl K</span>
+                </button>
+            </div>
+
+            <!-- Search Conversations Filter -->
+            <div class="search-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-icon"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="search-input" placeholder="Search conversations..." aria-label="Search conversations">
+                <button class="search-clear-btn" id="search-clear-btn" aria-label="Clear search" style="display: none;">&times;</button>
+            </div>
+
+            <!-- Conversation History List -->
+            <div class="conversation-container" id="conversation-container" role="region" aria-label="Saved conversations">
+                <div class="history-label">Recents</div>
+                <div class="conversation-list" id="conversation-list">
+                    <!-- Populated dynamically via app.js -->
+                </div>
+                <div class="empty-history" id="empty-history" style="display: none;">
+                    <p>No conversations yet.</p>
+                    <small>Start chatting to save your history!</small>
+                </div>
+            </div>
+
+            <!-- Sidebar Footer: Status & Settings -->
+            <div class="sidebar-footer">
+                <!-- System Status Indicator Card -->
+                <div class="status-card" id="status-card" title="Backend connection status">
+                    <div class="status-indicator">
+                        <span class="status-dot" id="status-dot"></span>
+                        <span class="status-text" id="status-text">Checking status...</span>
+                    </div>
+                    <span class="model-tag" id="status-model-tag">gpt-4o-mini</span>
+                </div>
+
+                <!-- Footer Actions: Theme Toggle & Clear All -->
+                <div class="footer-btn-row">
+                    <button class="btn btn-ghost" id="theme-toggle-btn" title="Toggle Light / Dark Theme" aria-label="Toggle theme">
+                        <span class="theme-icon-container">
+                            <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                            <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                        </span>
+                        <span id="theme-text">Theme</span>
+                    </button>
+
+                    <button class="btn btn-ghost text-danger" id="clear-all-history-btn" title="Clear all saved chats" aria-label="Clear all chats">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        <span>Clear All</span>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ================================================================== -->
+        <!-- Main Chat Area -->
+        <!-- ================================================================== -->
+        <main class="chat-main" id="chat-main">
+            <!-- Top Navigation Header -->
+            <header class="chat-navbar" id="chat-navbar">
+                <div class="navbar-left">
+                    <button class="icon-btn toggle-sidebar-btn" id="toggle-sidebar-btn" title="Toggle Sidebar" aria-label="Toggle sidebar menu">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                    </button>
+                    <div class="active-chat-meta">
+                        <h2 class="active-chat-title" id="active-chat-title" title="Click to rename" contenteditable="false">New Conversation</h2>
+                        <button class="icon-btn rename-btn" id="rename-title-btn" title="Rename conversation" aria-label="Rename conversation">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="navbar-right">
+                    <!-- Current Model Pill -->
+                    <div class="model-badge-pill" id="navbar-model-pill" title="Configured OpenAI Model">
+                        <span class="sparkle-icon">✨</span>
+                        <span id="current-model-name">gpt-4o-mini</span>
+                    </div>
+
+                    <!-- Voice TTS Mute/Unmute Toggle -->
+                    <button class="icon-btn tts-btn" id="tts-toggle-btn" title="Toggle Auto Text-to-Speech" aria-label="Toggle voice responses">
+                        <svg id="tts-icon-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                        <svg id="tts-icon-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+                    </button>
+
+                    <!-- Export Conversation Menu Dropdown -->
+                    <div class="dropdown-wrapper">
+                        <button class="icon-btn export-btn" id="export-btn" title="Export Conversation" aria-label="Export conversation">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        </button>
+                        <div class="dropdown-menu" id="export-dropdown" role="menu">
+                            <button class="dropdown-item" id="export-md" role="menuitem">Export as Markdown (.md)</button>
+                            <button class="dropdown-item" id="export-txt" role="menuitem">Export as Plain Text (.txt)</button>
+                            <button class="dropdown-item" id="export-json" role="menuitem">Export as JSON (.json)</button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Clear Current Chat -->
+                    <button class="icon-btn clear-current-btn" id="clear-current-btn" title="Clear messages in this conversation" aria-label="Clear chat">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Global Floating Notification Alert -->
+            <div class="notification-banner" id="notification-banner" style="display: none;" role="alert">
+                <span class="notification-icon" id="notification-icon">⚠️</span>
+                <span class="notification-msg" id="notification-msg"></span>
+                <button class="notification-close" id="notification-close">&times;</button>
+            </div>
+
+            <!-- Chat Scroll Area -->
+            <div class="chat-scroll-area" id="chat-scroll-area">
+                
+                <!-- Welcome Empty-State Screen (Shown when chat is empty) -->
+                <div class="welcome-screen" id="welcome-screen">
+                    <div class="welcome-hero">
+                        <div class="hero-orb">
+                            <div class="orb-inner">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                    <path d="M12 2a2 2 0 0 1 2 2v2h2a6 6 0 0 1 6 6v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-7a6 6 0 0 1 6-6h2V4a2 2 0 0 1 2-2z"/>
+                                    <path d="M8 12h.01M16 12h.01M9 16c1.5 1 4.5 1 6 0"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <h2 class="welcome-heading">How can SmartBot help you today?</h2>
+                        <p class="welcome-subtext">Your intelligent companion for coding, academic explanations, project ideas, and study planning.</p>
+                    </div>
+
+                    <!-- Suggested Prompts Grid -->
+                    <div class="suggestions-section">
+                        <div class="suggestions-header">
+                            <span>💡 Suggested Prompts</span>
+                            <small>Click any card to start</small>
+                        </div>
+                        <div class="suggestions-grid" id="suggestions-grid">
+                            <!-- Card 1: Python Prime Check -->
+                            <button class="suggestion-card" data-prompt="Write an efficient Python program to check whether a number is prime, with explanations and edge cases.">
+                                <div class="card-icon code-icon">🐍</div>
+                                <div class="card-content">
+                                    <strong>Prime Number Checker</strong>
+                                    <p>Write a Python program to check whether a number is prime.</p>
+                                </div>
+                                <div class="card-arrow">&rarr;</div>
+                            </button>
+
+                            <!-- Card 2: Machine Learning Explanation -->
+                            <button class="suggestion-card" data-prompt="Explain Machine Learning in simple language with an intuitive real-world example.">
+                                <div class="card-icon ml-icon">🧠</div>
+                                <div class="card-content">
+                                    <strong>Explain Machine Learning</strong>
+                                    <p>Explain Machine Learning simply with an intuitive analogy.</p>
+                                </div>
+                                <div class="card-arrow">&rarr;</div>
+                            </button>
+
+                            <!-- Card 3: Web Technologies -->
+                            <button class="suggestion-card" data-prompt="Explain HTML, CSS, and JavaScript and how they work together to create modern web applications.">
+                                <div class="card-icon web-icon">🌐</div>
+                                <div class="card-content">
+                                    <strong>HTML, CSS & JavaScript</strong>
+                                    <p>Learn how the core web technologies work together.</p>
+                                </div>
+                                <div class="card-arrow">&rarr;</div>
+                            </button>
+
+                            <!-- Card 4: College Project Planning -->
+                            <button class="suggestion-card" data-prompt="Help me create an impressive AI-based college project idea. Provide architecture, tech stack, and roadmap.">
+                                <div class="card-icon project-icon">🎓</div>
+                                <div class="card-content">
+                                    <strong>AI College Project Idea</strong>
+                                    <p>Design an AI college project with complete architecture.</p>
+                                </div>
+                                <div class="card-arrow">&rarr;</div>
+                            </button>
+
+                            <!-- Card 5: Python Study Plan -->
+                            <button class="suggestion-card" data-prompt="Create a comprehensive seven-day Python study plan for a beginner to master fundamentals and small projects.">
+                                <div class="card-icon study-icon">📅</div>
+                                <div class="card-content">
+                                    <strong>7-Day Python Study Plan</strong>
+                                    <p>Create a structured 7-day Python learning curriculum.</p>
+                                </div>
+                                <div class="card-arrow">&rarr;</div>
+                            </button>
+
+                            <!-- Card 6: Linear Regression -->
+                            <button class="suggestion-card" data-prompt="Explain linear regression with a simple numerical example and where it is applied.">
+                                <div class="card-icon math-icon">📊</div>
+                                <div class="card-content">
+                                    <strong>Linear Regression</strong>
+                                    <p>Explain linear regression with a simple step-by-step example.</p>
+                                </div>
+                                <div class="card-arrow">&rarr;</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages Container -->
+                <div class="messages-container" id="messages-container" role="log" aria-live="polite">
+                    <!-- Dynamic Messages Appended Here -->
+                </div>
+
+                <!-- Live Typing / Processing Indicator -->
+                <div class="typing-indicator-wrapper" id="typing-indicator" style="display: none;">
+                    <div class="message-row assistant">
+                        <div class="avatar bot-avatar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2a2 2 0 0 1 2 2v2h2a6 6 0 0 1 6 6v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-7a6 6 0 0 1 6-6h2V4a2 2 0 0 1 2-2z"/>
+                                <circle cx="9" cy="13" r="1.5" fill="currentColor"/>
+                                <circle cx="15" cy="13" r="1.5" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <div class="message-bubble typing-bubble">
+                            <div class="typing-dots">
+                                <span class="dot"></span>
+                                <span class="dot"></span>
+                                <span class="dot"></span>
+                            </div>
+                            <span class="typing-label">SmartBot is thinking...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Anchor for smooth scrolling -->
+                <div id="messages-anchor"></div>
+            </div>
+
+            <!-- Scroll to bottom float button -->
+            <button class="scroll-bottom-btn" id="scroll-bottom-btn" title="Scroll to latest" aria-label="Scroll to bottom" style="display: none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+            </button>
+
+            <!-- ============================================================== -->
+            <!-- Input Bar Dock -->
+            <!-- ============================================================== -->
+            <footer class="chat-input-wrapper">
+                <form class="chat-form" id="chat-form" onsubmit="return false;">
+                    <div class="input-card" id="input-card">
+                        <!-- Speech Recognition Mic Button -->
+                        <button type="button" class="icon-btn mic-btn" id="mic-btn" title="Voice Input (Speech Recognition)" aria-label="Use voice input">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                                <line x1="12" y1="19" x2="12" y2="23"/>
+                                <line x1="8" y1="23" x2="16" y2="23"/>
+                            </svg>
+                            <span class="mic-wave" id="mic-wave"></span>
+                        </button>
+
+                        <!-- Main Auto-Expanding Textarea -->
+                        <textarea 
+                            id="message-input" 
+                            placeholder="Message SmartBot... (Press Enter to send, Shift+Enter for new line)"
+                            rows="1"
+                            maxlength="4000"
+                            aria-label="Chat input message"
+                            autocomplete="off"></textarea>
+
+                        <!-- Send Button -->
+                        <button type="button" class="btn btn-send" id="send-btn" title="Send message (Enter)" aria-label="Send message" disabled>
+                            <svg class="send-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13"/>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                            </svg>
+                            <span class="spinner-icon" id="send-spinner" style="display: none;"></span>
+                        </button>
+                    </div>
+
+                    <div class="input-meta">
+                        <span class="char-counter" id="char-counter">0 / 4000</span>
+                        <span class="input-disclaimer">SmartBot may generate inaccurate information. Verify critical facts.</span>
+                    </div>
+                </form>
+            </footer>
+        </main>
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- Confirmation Dialog Modal -->
+    <!-- ====================================================================== -->
+    <div class="modal-backdrop" id="confirmation-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-title">Confirm Action</h3>
+                <button class="icon-btn modal-close-btn" id="modal-cancel-x">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="modal-message">Are you sure you want to proceed?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" id="modal-cancel-btn">Cancel</button>
+                <button class="btn btn-danger" id="modal-confirm-btn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application JavaScript Logic -->
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
