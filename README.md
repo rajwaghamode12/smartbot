@@ -187,32 +187,6 @@ smart_ai_chatbot/
 
 ---
 
-### macOS & Linux (Bash / Zsh)
-
-1. **Navigate to the directory**:
-   ```bash
-   cd smart_ai_chatbot
-   ```
-
-2. **Create and activate the virtual environment**:
-   ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate
-   ```
-
-3. **Install dependencies**:
-   ```bash
-   pip install --upgrade pip
-   pip install -r requirements.txt
-   ```
-
-4. **Copy the environment configuration**:
-   ```bash
-   cp .env.example .env
-   ```
-
----
-
 ## 🔑 OpenAI API Key Configuration
 
 1. Visit [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys) and sign in.
