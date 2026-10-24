@@ -281,7 +281,7 @@ python test_app.py
 
 ### 1. `app.py` (Backend Engine)
 - **`load_dotenv(override=True)`**: Safely reads environment variables from `.env` without hardcoding credentials in git history.
-- **`validate_chat_payload(payload)`**: Verifies that the JSON request contains a valid `messages` array, checks that only allowed roles (`user`, `assistant`) are sent, and limits message characters to 4,000.
+- **`validate_chat_payload(payload)`**: Verifies that the JSON request contains a valid `messages` array, checks that only allowed roles (`user`, `assistant`) are sent, and limits message characters to 10,000.
 - **`call_openai_model(messages)`**: Uses `openai.OpenAI()` client to request chat completions using `OPENAI_MODEL` (`gpt-4o-mini`).
 - **`generate_demo_response(query)`**: High-quality offline fallback providing educational replies and guidance when an API key is not yet provided.
 - **Route `GET /api/status`**: Returns operational status, model name, and whether an API key is active without leaking secret tokens.
@@ -309,7 +309,7 @@ python test_app.py
 
 1. **Zero Secret Leakage**: The OpenAI API key is exclusively stored in `.env` on the server. The client browser never receives or stores the API key.
 2. **Input Validation & Sanitization**:
-   - Message length is restricted to 4,000 characters.
+   - Message length is restricted to 10,000 characters.
    - Payloads are restricted to a maximum size of 1 MB.
    - Message roles are strictly validated (`user` and `assistant` only).
 3. **Cross-Site Scripting (XSS) Prevention**: User input is strictly escaped into HTML entities before rendering.

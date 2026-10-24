@@ -46,7 +46,7 @@ SYSTEM_INSTRUCTIONS = os.getenv(
     ),
 ).strip()
 
-MAX_MESSAGE_LENGTH = 4000      # Max characters allowed per single message
+MAX_MESSAGE_LENGTH = int(os.getenv("MAX_MESSAGE_LENGTH", 10000))  # Max characters allowed per single message
 MAX_HISTORY_MESSAGES = 20     # Max prior messages retained in conversational context
 MAX_CONTENT_LENGTH = 1 * 1024 * 1024  # 1 MB max payload size
 
@@ -300,6 +300,7 @@ def api_status():
         "app_name": "SmartBot — AI Chatbot",
         "version": "1.0.0",
         "model": GEMINI_MODEL,
+        "max_message_length": MAX_MESSAGE_LENGTH,
         "api_key_configured": has_key,
         "demo_mode": not has_key,
         "message": (

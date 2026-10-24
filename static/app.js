@@ -16,6 +16,7 @@
     const STORAGE_KEY_ACTIVE_ID = 'smartbot_active_chat_id';
     const STORAGE_KEY_THEME = 'smartbot_theme';
     const STORAGE_KEY_TTS = 'smartbot_tts_enabled';
+    const DEFAULT_MAX_MESSAGE_LENGTH = 10000;
 
     let state = {
         conversations: [],
@@ -23,6 +24,7 @@
         isGenerating: false,
         ttsEnabled: false,
         theme: 'dark',
+        maxMessageLength: DEFAULT_MAX_MESSAGE_LENGTH,
         backendStatus: null,
         speechRecognition: null,
         isRecordingVoice: false
@@ -560,6 +562,12 @@
         const text = (overrideText !== null ? overrideText : elements.messageInput.value).trim();
         if (!text) return;
 
+        const maxLimit = state.maxMessageLength || DEFAULT_MAX_MESSAGE_LENGTH;
+        if (text.length > maxLimit) {
+            showNotification(`Message exceeds the maximum limit of ${maxLimit.toLocaleString()} characters (current: ${text.length.toLocaleString()}). Please shorten your message.`, 'danger');
+            return;
+        }
+
         // Ensure active conversation exists
         let activeChat = getConversationById(state.currentId);
         if (!activeChat) {
@@ -1028,6 +1036,12 @@
                 elements.statusModelTag.textContent = data.model || 'gpt-4o-mini';
                 elements.currentModelName.textContent = data.model || 'gpt-4o-mini';
 
+                if (data.max_message_length) {
+                    state.maxMessageLength = data.max_message_length;
+                    elements.messageInput.setAttribute('maxlength', data.max_message_length);
+                    updateCharCounter();
+                }
+
                 if (data.api_key_configured) {
                     elements.statusDot.className = 'status-dot online';
                     elements.statusText.textContent = 'API Connected';
@@ -1062,12 +1076,15 @@
     }
 
     function updateCharCounter() {
+        const maxLen = state.maxMessageLength || DEFAULT_MAX_MESSAGE_LENGTH;
         const len = elements.messageInput.value.length;
-        elements.charCounter.textContent = `${len} / 4000`;
+        elements.charCounter.textContent = `${len} / ${maxLen}`;
 
-        if (len > 3800) {
+        if (len >= maxLen) {
             elements.charCounter.className = 'char-counter limit';
-        } else if (len > 3000) {
+        } else if (len > maxLen * 0.95) {
+            elements.charCounter.className = 'char-counter limit';
+        } else if (len > maxLen * 0.8) {
             elements.charCounter.className = 'char-counter warning';
         } else {
             elements.charCounter.className = 'char-counter';

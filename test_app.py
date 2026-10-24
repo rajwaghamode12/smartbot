@@ -30,6 +30,7 @@ class SmartBotTestCase(unittest.TestCase):
         self.assertEqual(data.get("status"), "online")
         self.assertIn("api_key_configured", data)
         self.assertIn("model", data)
+        self.assertEqual(data.get("max_message_length"), 10000)
 
     def test_chat_invalid_content_type(self):
         """Verify non-JSON payload returns 400."""
@@ -59,6 +60,49 @@ class SmartBotTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         data = response.get_json()
         self.assertIn("Invalid role", data.get("error", ""))
+
+    def test_message_below_limit(self):
+        """Verify message below limit (e.g., 5,000 characters) passes validation."""
+        msg_5000 = "A" * 5000
+        response = self.client.post(
+            "/api/chat",
+            data=json.dumps({
+                "messages": [{"role": "user", "content": msg_5000}]
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertEqual(data.get("role"), "assistant")
+
+    def test_message_at_limit(self):
+        """Verify message at exactly 10,000 characters passes validation."""
+        msg_10000 = "B" * 10000
+        response = self.client.post(
+            "/api/chat",
+            data=json.dumps({
+                "messages": [{"role": "user", "content": msg_10000}]
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertEqual(data.get("role"), "assistant")
+
+    def test_message_above_limit(self):
+        """Verify message exceeding 10,000 characters is rejected with 400 and clear error."""
+        msg_10001 = "C" * 10001
+        response = self.client.post(
+            "/api/chat",
+            data=json.dumps({
+                "messages": [{"role": "user", "content": msg_10001}]
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        data = response.get_json()
+        self.assertEqual(data.get("type"), "validation_error")
+        self.assertIn("exceeds maximum allowed length of 10000 characters", data.get("error", ""))
 
     def test_chat_demo_or_live_reply(self):
         """Verify POST /api/chat handles message correctly and returns assistant reply."""
