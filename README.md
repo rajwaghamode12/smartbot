@@ -350,25 +350,7 @@ python test_app.py
 
 ---
 
-## ❓ Troubleshooting Common Issues
 
-### 1. `OpenAI Authentication Error` (401)
-- **Cause**: The key in `.env` is invalid or mistyped.
-- **Fix**: Re-check your key at [platform.openai.com/api-keys](https://platform.openai.com/api-keys). Ensure there are no spaces or extra quotes.
-
-### 2. `OpenAI Rate Limit / Quota Exceeded` (429)
-- **Cause**: Your OpenAI developer account has run out of prepaid API credits.
-- **Fix**: Check your balance at [platform.openai.com/settings/organization/billing](https://platform.openai.com/settings/organization/billing).
-
-### 3. `Address already in use` (Port 5000 Conflict)
-- **Cause**: Another service or AirPlay is using port 5000.
-- **Fix**: Change `PORT=5001` in `.env` and restart `python app.py`.
-
-### 4. Voice Input (Microphone) Not Working
-- **Cause**: Browser permissions or lack of HTTPS/localhost environment.
-- **Fix**: Allow microphone access in your browser settings (Chrome: `chrome://settings/content/microphone`). Note that Web Speech API requires `localhost` or HTTPS.
-
----
 
 ## 🚀 Future Roadmap & Extensions
 
